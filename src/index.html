@@ -11,15 +11,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/assets/css/layout.css"></link>
 
+    <script src="https://unpkg.com/js-yaml@3.12.0/dist/js-yaml.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/markdown-it@10.0.0/dist/markdown-it.min.js"></script>
-    
+    <script src="https://unpkg.com/turndown/dist/turndown.js"></script>    
+
     <script src="https://unpkg.com/@isomorphic-git/lightning-fs"></script>
     <script src="https://unpkg.com/isomorphic-git@beta"></script>
 
     <script type="module">
-      import { display, config  } from '/assets/js/editor.js';
-      window.addEventListener('hashchange', display, false);
-      display();
+      import { GITEditor  } from '/assets/js/editor.js';
+      window.addEventListener('hashchange', GITEditor.display, false);
+      GITEditor.display();
     </script>
   </head>
 
@@ -27,9 +29,17 @@
     <header>
       <h1>Editor</h1>
     </header>
-    <section id="listing">
-    </section>
-    <section id="editor">
+    <details open="true">
+      <summary>Directory listing</summary>
+      <section id="listing">
+      </section>
+    </details>
+    <details>
+      <summary>Document metadata</summary>
+      <section id="metadata">
+      </section>
+    </details>
+    <section id="editor" contentEditable="true">
     </section>
     <footer>
       <span class="copyright">Copyright 2021 Stance Global Ltd</span>
