@@ -1,7 +1,53 @@
 html {
     --base-font: Raleway, sans-serif;
+    --link-color:     blue;
+    --page-color:     #fff;
+    --lowlight-color: #eee;
+    --border-color:   #888;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-weight: normal;
 }
 
 body {
     font-family: var(--base-font);
+    box-sizing: border-box;
+}
+
+section#editor {
+    width: 80ch;
+    padding-left: 1vw;
+    padding-right: 1vw;
+    padding-top: 1vh;
+    padding-bottom: 1vh;
+    margin-left: auto;
+    margin-right: auto;
+
+    background-color: var(--page-color);
+}
+
+[contenteditable] {
+  outline: 0px solid transparent;
+}
+
+section#editor, section#editor:focus-visible {
+    border: 1px solid var(--border-color);
+}
+
+section#editor:empty {
+    display: none;
+}
+
+section#editor:-moz-only-whitespace {
+    display: none;
+}
+
+a:any-link {
+    color: var(--link-color);
+    text-decoration: none;
+}
+
+details.editor { /* if we had the :has pseudoclass we could dispense with the classname here. */
+    background-color: var(--lowlight-color);
 }
