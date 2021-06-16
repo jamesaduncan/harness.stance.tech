@@ -1,21 +1,5 @@
 import http from 'https://unpkg.com/isomorphic-git@beta/http/web/index.js'
 
-// Initialize isomorphic-git with a file system
-window.fs = new LightningFS('fs')
-
-// I prefer using the Promisified version honestly
-window.pfs = window.fs.promises
-
-const dir = '/'
-let clone = await git.clone({
-    fs,
-    http,
-    dir,
-    url: 'https://github.com/jamesaduncan/osom.guide.git', //'https://github.com/isomorphic-git/lightning-fs',
-    corsProxy: 'http://localhost:9999',
-    force: true
-});
-
 let config = {
     DOMConfig: {
 	directory: "listing",
@@ -43,6 +27,11 @@ let config = {
 }
 
 class Matter {
+    static hasMatter( aString ) {
+	let at = aString.indexOf( config.matter.delimiter );
+	return (at != -1 && at == 0);
+    }
+
     static parse( aString ) {
 	let content, meta = ["", {}];
 	let at = aString.indexOf( config.matter.delimiter );
@@ -190,78 +179,103 @@ function drawMetadata( metadata ) {
     md.appendChild(textArea);
 }
 
-async function drawFile( aFile ) {
-    clearFileContents();
-    let elem = document.getElementById( config.DOMConfig.file );
 
-    let p = new Path( aFile );
-    drawDirectory(p.path);
-    
-    let fdata = await pfs.readFile(aFile, { encoding: "utf8" });
+class GITEditor {
 
-    let [ content, metadata ] = Matter.parse( fdata );
-    drawMetadata( metadata );
-    
-    if ( config.handlers[ p.extension ] ) {
-	elem.innerHTML = config.handlers[ p.extension ].read( content );
-    } else {
-	elem.innerHTML = content;
-    }
-}
-
-async function drawDirectory( aPath = "/" ) {
-    let list = await pfs.readdir(aPath);
-
-    clearDirectoryListing();
-    clearFileContents();
-    
-    let ul = document.createElement('ul');
-
-    let addEntry = async function( entry ) {
-	let fullpath = [aPath, entry].join("");
-	let dirent   = await pfs.stat(fullpath);
+    constructor( url, config ) {
+	// Initialize isomorphic-git with a file system
+	let fs = this.fs = new LightningFS('fs')
 	
-	let li  = document.createElement('li');
-	let a   = document.createElement('a');
+	// I prefer using the Promisified version honestly
+	this.pfs    = this.fs.promises
+	this.repo   = url;
+	this.config = config;
+    }
+
+    async clone() {
+	let dir = "/";
+	let fs  = this.fs;
+	this.clone = await git.clone({
+	    fs,
+	    http,
+	    dir,
+	    url: this.repo,
+	    corsProxy: this.config?.corsProxy || 'https://cors.isomorphic-git.org', 
+	    force: true
+	});
+    }
+    
+    async display() {
+	let [,path] = (window.location.hash || "#/").match(/\#(.+)$/); // always trim the top of the hash
+	let dirent = await this.pfs.stat(path); 
+	if ( dirent?.type == 'file' ) {
+	    await this.drawFile( path );
+	} else if ( dirent?.type == 'dir' ) {
+	    await this.drawDirectory( path );
+	} else {
+	    throw new Error(`unknown file type ${dirent?.type}`);
+	}
+    }
+
+    async drawFile( aFile ) {
+	clearFileContents();
+	let elem = document.getElementById( config.DOMConfig.file );
 	
-	let txt = document.createTextNode( entry );	
-	a.appendChild(txt);
+	let p = new Path( aFile );
+	this.drawDirectory(p.path);
 
-	let newpath = new Path(fullpath);
-	if ( dirent?.type == 'dir' ) {
-	    newpath = newpath.normalize() + "/";
-	} else newpath = newpath.normalize();
+	let fdata = await this.pfs.readFile(aFile, { encoding: "utf8" });
 
-	a.setAttribute('href', "/#" + newpath);
+	let [content, metadata] = [ "", {} ];
+	if (Matter.hasMatter(fdata)) {
+	    [ content, metadata ] = Matter.parse( fdata );
+	} else content = fdata;
+	    
+	drawMetadata( metadata );
 
-	li.appendChild(a);
-	ul.appendChild(li);
+	elem.innerHTML = config.handlers?.[ p.extension ]?.read( content ) || content;
     }
 
-    try {
-	addEntry("..");
-    } catch(e){
-	console.log("couldn't add .. to the list of files. We're probably the root");
-    }
-    list.forEach( addEntry );
+    async drawDirectory( aPath = "/" ) {
+	let list = await this.pfs.readdir(aPath);
 
-    document.getElementById( config.DOMConfig.directory ).appendChild(ul);    
+	clearDirectoryListing();
+	clearFileContents();
+    
+	let ul = document.createElement('ul');
+
+	let pfs = this.pfs;
+	let addEntry = async function( entry ) {
+	    let fullpath = [aPath, entry].join("");
+	    let dirent   = await pfs.stat(fullpath);
+	    
+	    let li  = document.createElement('li');
+	    let a   = document.createElement('a');
+	    
+	    let txt = document.createTextNode( entry );	
+	    a.appendChild(txt);
+	    
+	    let newpath = new Path(fullpath);
+	    if ( dirent?.type == 'dir' ) {
+		newpath = newpath.normalize() + "/";
+	    } else newpath = newpath.normalize();
+	    
+	    a.setAttribute('href', "/#" + newpath);
+	    
+	    li.appendChild(a);
+	    ul.appendChild(li);
+	}
+	
+	try {
+	    addEntry("..");
+	} catch(e){
+	    console.log("couldn't add .. to the list of files. We're probably the root");
+	}
+	list.forEach( addEntry );
+	
+	document.getElementById( config.DOMConfig.directory ).appendChild(ul);    
+    }
+
 }
 
-async function display() {
-    let [,path] = (window.location.hash || "#/").match(/\#(.+)$/); // always trim the top of the hash
-    let dirent = await pfs.stat(path); 
-    if ( dirent?.type == 'file' ) {
-	await drawFile( path );
-    } else if ( dirent?.type == 'dir' ) {
-	await drawDirectory( path );
-    } else {
-	throw new Error(`unknown file type ${dirent?.type}`);
-    }
-}
-
-let GITEditor = {
-    display: display,
-};
-
-export { display, config, GITEditor }
+export { config, GITEditor }

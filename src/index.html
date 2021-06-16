@@ -20,8 +20,17 @@
 
     <script type="module">
       import { GITEditor  } from '/assets/js/editor.js';
-      window.addEventListener('hashchange', GITEditor.display, false);
-      GITEditor.display();
+
+      let editor = new GITEditor('https://github.com/jamesaduncan/osom.guide.git', {
+	  corsProxy: 'http://localhost:9999'
+      });
+
+      await editor.clone();
+      
+      window.addEventListener('hashchange', function() { editor.display() }, false);
+
+      editor.display();            
+
     </script>
   </head>
 
