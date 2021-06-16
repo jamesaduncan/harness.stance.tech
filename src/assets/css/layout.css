@@ -1,0 +1,7 @@
+html {
+    --base-font: Raleway, sans-serif;
+}
+
+body {
+    font-family: var(--base-font);
+}

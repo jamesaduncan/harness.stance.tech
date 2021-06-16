@@ -1,0 +1,38 @@
+---
+---
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <title>Harness</title>
+    
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/assets/css/layout.css"></link>
+
+    <script src="https://cdn.jsdelivr.net/npm/markdown-it@10.0.0/dist/markdown-it.min.js"></script>
+    
+    <script src="https://unpkg.com/@isomorphic-git/lightning-fs"></script>
+    <script src="https://unpkg.com/isomorphic-git@beta"></script>
+
+    <script type="module">
+      import { display, config  } from '/assets/js/editor.js';
+      window.addEventListener('hashchange', display, false);
+      display();
+    </script>
+  </head>
+
+  <body>
+    <header>
+      <h1>Editor</h1>
+    </header>
+    <section id="listing">
+    </section>
+    <section id="editor">
+    </section>
+    <footer>
+      <span class="copyright">Copyright 2021 Stance Global Ltd</span>
+    </footer>
+  </body>
+</html>
