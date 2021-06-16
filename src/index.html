@@ -29,8 +29,7 @@
       
       window.addEventListener('hashchange', function() { editor.display() }, false);
 
-      editor.display();            
-
+      editor.display();
     </script>
   </head>
 
@@ -48,8 +47,10 @@
       <section id="metadata">
       </section>
     </details>
-    <section id="editor" contentEditable="true">
-    </section>
+    <details class="editor" open="true">
+      <summary></summary>
+      <section id="editor" contentEditable="true"></section>
+    </details>
     <footer>
       <span class="copyright">Copyright 2021 Stance Global Ltd</span>
     </footer>
