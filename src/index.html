@@ -20,9 +20,8 @@
 
     <script type="module">     
      import { EleventyEditor  } from '/assets/js/editor.js';
-
      
-     document.querySelector('#clone').addEventListener('click', async (e) => {
+     const runDisplay = async (e) => {
 	 let editor = new EleventyEditor(document.querySelector( e.target.getAttribute('data-for') ).value, {
 	     corsProxy: 'http://localhost:9999'
 	 });
@@ -31,8 +30,13 @@
 	 
 	 window.addEventListener('hashchange', function() { editor.display() }, false);
 	 
-	 editor.display();
-     }, false);
+	 editor.display();	 
+     };
+     
+     let cloneButton = document.querySelector('#clone');
+
+     cloneButton.addEventListener('click', runDisplay, false);
+     runDisplay( { target: cloneButton } );
     </script>
   </head>
 
