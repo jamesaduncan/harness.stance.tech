@@ -19,21 +19,20 @@
     <script src="https://unpkg.com/isomorphic-git@beta"></script>
 
     <script type="module">     
-     import { GITEditor  } from '/assets/js/editor.js';
+     import { EleventyEditor  } from '/assets/js/editor.js';
 
-     (async function() {
-	 
-	 let editor = new GITEditor('https://github.com/jamesaduncan/osom.guide.git', {
+     
+     document.querySelector('#clone').addEventListener('click', async (e) => {
+	 let editor = new EleventyEditor(document.querySelector( e.target.getAttribute('data-for') ).value, {
 	     corsProxy: 'http://localhost:9999'
 	 });
 	 
 	 await editor.clone();
-      
+	 
 	 window.addEventListener('hashchange', function() { editor.display() }, false);
 	 
 	 editor.display();
-
-     })();
+     }, false);
     </script>
   </head>
 
@@ -42,9 +41,11 @@
       <h1>Editor</h1>
     </header>
     <details open="true">
-      <summary>Directory listing</summary>
-      <section id="listing">
-      </section>
+	<summary>Directory listing</summary>
+	<input id="repository" type="text" name="repository" value="https://github.com/jamesaduncan/osom.guide.git">
+	<button data-for="#repository" id="clone">Edit</button>
+	<section id="listing">
+	</section>
     </details>
     <details>
       <summary>Document metadata</summary>
