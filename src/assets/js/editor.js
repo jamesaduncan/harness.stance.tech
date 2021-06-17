@@ -2,9 +2,10 @@ import http from 'https://unpkg.com/isomorphic-git@beta/http/web/index.js'
 
 let config = {
     DOMConfig: {
-	directory: "listing",
-	file     : "editor",
-	metadata : "metadata"
+      directory: "listing",
+      file     : "editor",
+      metadata : "metadata",
+      repository: "#repository",
     },
     matter   : {
 	delimiter: "---"
@@ -182,27 +183,32 @@ function drawMetadata( metadata ) {
 
 class GITEditor {
 
-    constructor( url, config ) {
-	// Initialize isomorphic-git with a file system
-	let fs = this.fs = new LightningFS('fs')
-	
-	// I prefer using the Promisified version honestly
-	this.pfs    = this.fs.promises
-	this.repo   = url;
-	this.config = config;
+    constructor( url, conf ) {
+      // Initialize isomorphic-git with a file system
+      let fs = this.fs = new LightningFS('fs')
+
+      let myconfig = {};
+      Object.assign( myconfig, config, conf );
+      
+      // I prefer using the Promisified version honestly
+      this.pfs    = this.fs.promises
+      this.repo   = url;
+      this.config = myconfig;
+
+      document.querySelector( myconfig.DOMConfig?.repository ).value = this.repo;
     }
 
     async clone() {
-	let dir = "/";
-	let fs  = this.fs;
-	this.clone = await git.clone({
-	    fs,
-	    http,
-	    dir,
-	    url: this.repo,
-	    corsProxy: this.config?.corsProxy || 'https://cors.isomorphic-git.org', 
-	    force: true
-	});
+      let dir = "/";
+      let fs  = this.fs;
+      this.clone = await git.clone({
+	fs,
+	http,
+	dir,
+	url: this.repo,
+	corsProxy: this.config?.corsProxy || 'https://cors.isomorphic-git.org', 
+	force: true
+      });
     }
     
     async display() {
