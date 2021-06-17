@@ -12,8 +12,9 @@ class Matter {
     let at = aString.indexOf( Matter.delimiter );
     if (at != -1 && at == 0) {
       // we have some front matter
-      let end = aString.indexOf( Matter.delimiter.length, 1);
+      let end = aString.indexOf( Matter.delimiter, 1);
       content = aString.substring( end + Matter.delimiter.length );
+      console.log("end", end, "delimiter length: ", Matter.delimiter.length);
       meta    = jsyaml.load( aString.substring( 0 + Matter.delimiter.length, end) );
     }
     return [ content, meta ];
@@ -23,7 +24,8 @@ class Matter {
 Matter.delimiter = "---";
 
 class Path {
-
+  /* this is adapted/copied from the node.js path class */
+  
   constructor( aPath ) {
     this.fullpath = aPath;
   }
@@ -124,7 +126,7 @@ class Path {
 class EleventyEditor {
 
   constructor( url, conf ) {
-    let fs = this.fs = new LightningFS('fs')
+    let fs = this.fs = new LightningFS(url)
     
     let myconfig = {};
     Object.assign( myconfig, EleventyEditor.defaultConfig, conf );
@@ -174,12 +176,23 @@ class EleventyEditor {
     
     let [content, metadata] = [ "", {} ];
     if (Matter.hasMatter(fdata)) {
+      console.log("there is front matter");
       [ content, metadata ] = Matter.parse( fdata );
-    } else content = fdata;
+    } else {
+      console.log("there is no front matter");
+      content = fdata;
+    }
     
     this.drawMetadata( metadata );
-    
-    elem.innerHTML = this.config.handlers?.[ p.extension ]?.read( content ) || content;
+
+    let handler = this.config.handlers[p.extension]?.read;
+    if ( handler ) {
+      console.log(`got a handler for ${p.extension}`);
+      elem.innerHTML = handler( content );
+    } else {
+      console.log(`no handler for ${p.extension}`);
+      elem.innerHTML = content;
+    }
   }
 
   async drawDirectory( aPath = "/" ) {
@@ -274,6 +287,16 @@ EleventyEditor.defaultConfig = {
     delimiter: "---"
   },
   handlers : {
+    'js': {
+      read: ( content ) => {
+	return `<pre>${content}</pre>`;
+      },
+    },
+    'json': {
+      read: ( content ) => {
+	return `<pre>${content}</pre>`;
+      }
+    },
     'md': {
       read: ( content ) => {
 	let md = markdownit();
