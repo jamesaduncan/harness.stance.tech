@@ -18,18 +18,22 @@
     <script src="https://unpkg.com/@isomorphic-git/lightning-fs"></script>
     <script src="https://unpkg.com/isomorphic-git@beta"></script>
 
-    <script type="module">
-      import { GITEditor  } from '/assets/js/editor.js';
+    <script type="module">     
+     import { GITEditor  } from '/assets/js/editor.js';
 
-      let editor = new GITEditor('https://github.com/jamesaduncan/osom.guide.git', {
-	  corsProxy: 'http://localhost:9999'
-      });
-
-      await editor.clone();
+     (async function() {
+	 
+	 let editor = new GITEditor('https://github.com/jamesaduncan/osom.guide.git', {
+	     corsProxy: 'http://localhost:9999'
+	 });
+	 
+	 await editor.clone();
       
-      window.addEventListener('hashchange', function() { editor.display() }, false);
+	 window.addEventListener('hashchange', function() { editor.display() }, false);
+	 
+	 editor.display();
 
-      editor.display();
+     })();
     </script>
   </head>
 
