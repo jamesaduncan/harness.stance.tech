@@ -29,6 +29,7 @@
 
      /* construct the editor */
      let elty = window.elty = new Editor();
+     let CWD  = "/";
 
      /* tags up the load button with a click handle so that we clone the repo */
      document.querySelector('#clone').addEventListener('click', async (event) => {
@@ -43,15 +44,13 @@
        let entries = await elty.fs.promises.readdir("/");
        let node = $.listBuilder( entries, {
 	 ordered: false,
-	 mapped : [ 'a', 'li' ]
+	 mapped : [ 'a', (a) => {
+	   a.addEventListener('click', (event) => {
+	     console.log(event.target.text);
+	   })
+	 }, 'li' ]
        });
 
-       node.querySelectorAll('a').forEach( (a) => {
-	 a.addEventListener('click', (event) => {
-	   console.log(event.target);
-	 },false);
-       });
-       
        let listing = document.querySelector('#listing');
        while (listing.firstChild) { listing.removeChild(listing.firstChild) }
        listing.appendChild( node );

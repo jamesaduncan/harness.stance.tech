@@ -39,8 +39,9 @@ Helpers.listBuilder = function( aList, opts = {}) {
   opts.mapped.forEach( ( nodeType, index ) => {
 
     let firstTime = !index;
-    aList = aList.map( (listItem) => {
-      if ( typeof( nodeType ) == 'string' ) {
+    console.log(typeof(nodeType));
+    if ( typeof( nodeType ) == 'string' ) {
+      aList = aList.map( (listItem) => {
 	if ( firstTime ) {	
 	  let newElement = document.createElement( nodeType );
 	  let textNode = document.createTextNode( listItem );
@@ -51,9 +52,10 @@ Helpers.listBuilder = function( aList, opts = {}) {
 	  newElement.appendChild( listItem );
 	  return newElement;
 	}
-      }
-
-    });
+      });
+    } else if ( typeof( nodeType ) == 'function') {
+      aList.forEach( nodeType );
+    }
 
   });
 
