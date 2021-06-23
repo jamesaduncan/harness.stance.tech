@@ -2,7 +2,8 @@ html {
     --base-font: Raleway, sans-serif;
     --link-color:     blue;
     --page-color:     #fff;
-    --lowlight-color: #eee;
+    --lowlight-color: #d8d8d8;
+    --highlight-color: #dfdfdf;
     --border-color:   #888;
 }
 
@@ -50,4 +51,55 @@ a:any-link {
 
 details.editor { /* if we had the :has pseudoclass we could dispense with the classname here. */
     background-color: var(--lowlight-color);
+}
+
+ul.toolbar, ul.toolbar ul {
+    display: table;
+    padding: 0;
+    margin: 0;
+}
+
+ul.toolbar li {
+    display: table-cell;
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+
+    vertical-align: middle;
+}
+
+ul.toolbar li.section {
+    border-right: 1px solid var(--border-color);
+    padding-left: .5em;
+    padding-right: .5em;
+}
+
+ul.toolbar li.section li button {
+    border: none;
+    cursor: pointer;
+    background-color: var(--lowlight-color);
+
+    font-family: var(--base-font);
+
+    text-align: center;
+}
+
+ul.toolbar li.section li button:hover {
+    background-color: var(--highlight-color);
+}
+
+ul.toolbar select {
+    font-family: var(--base-font);
+}
+
+[disabled=true] {
+    display: none;
+}
+
+[disabled=false] {
+    display: initial;
+}
+
+#repository {
+    width: 40em;
 }

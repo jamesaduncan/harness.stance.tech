@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <title>Harness</title>
-    
+
     <link rel="preconnect" href="https://fonts.gstatic.com">
     <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/assets/css/layout.css"></link>
@@ -18,25 +18,45 @@
     <script src="https://unpkg.com/@isomorphic-git/lightning-fs"></script>
     <script src="https://unpkg.com/isomorphic-git@beta"></script>
 
-    <script type="module">     
-     import { EleventyEditor  } from '/assets/js/editor.js';
-     
-     const runDisplay = async (e) => {
-	 let editor = new EleventyEditor(document.querySelector( e.target.getAttribute('data-for') ).value, {
-	     corsProxy: 'http://localhost:9999'
-	 });
-	 
-	 await editor.clone();
-	 
-	 window.addEventListener('hashchange', function() { editor.display() }, false);
-	 
-	 editor.display();	 
-     };
-     
-     let cloneButton = document.querySelector('#clone');
+    <script>
 
-     cloneButton.addEventListener('click', runDisplay, false);
-     runDisplay( { target: cloneButton } );
+    </script>
+    
+    <script type="module">
+     import { Helpers, Editor } from '/assets/js/eleventor.js';
+
+     const $ = Helpers;
+
+     /* construct the editor */
+     let elty = window.elty = new Editor();
+
+     /* tags up the load button with a click handle so that we clone the repo */
+     document.querySelector('#clone').addEventListener('click', async (event) => {
+       let url = $.dataFor( event.target );
+       let fs  = new LightningFS();
+       await fs.init( url );
+       elty.clone({ fileSystem: fs });
+     }, false);
+     
+     /* when we clone the repo, we need to do something */
+     elty.addEventListener("clone", async () => {
+       let entries = await elty.fs.promises.readdir("/");
+       let node = $.listBuilder( entries, {
+	 ordered: false,
+	 mapped : [ 'a', 'li' ]
+       });
+
+       node.querySelectorAll('a').forEach( (a) => {
+	 a.addEventListener('click', (event) => {
+	   console.log(event.target);
+	 },false);
+       });
+       
+       let listing = document.querySelector('#listing');
+       while (listing.firstChild) { listing.removeChild(listing.firstChild) }
+       listing.appendChild( node );
+     });
+     
     </script>
   </head>
 
@@ -44,13 +64,13 @@
     <header>
       <h1>Editor</h1>
     </header>
-    <details open="true">
-	<summary>Directory listing</summary>
-	<input id="repository" type="text" name="repository" value="https://github.com/jamesaduncan/osom.guide.git">
-	<button data-for="#repository" id="clone">Edit</button>
-	<section id="listing">
-	</section>
-    </details>
+    <section>
+      <label for="repository">Git repository: </label>
+      <input id="repository" type="text" name="repository" value="https://github.com/jamesaduncan/osom.guide.git">
+      <button data-for="#repository" data-property="value" id="clone">Load</button>
+      <section id="listing">
+      </section>
+    </section>
     <details>
       <summary>Document metadata</summary>
       <section id="metadata">
@@ -58,10 +78,12 @@
     </details>
     <details class="editor" open="true">
       <summary></summary>
-      <section id="editor" contentEditable="true"></section>
+      {% include './toolbar.html' %}
+      <section id="editor" contenteditable="true"></section>
     </details>
     <footer>
       <span class="copyright">Copyright 2021 Stance Global Ltd</span>
     </footer>
+    <script src="/assets/js/content-editor.js"></script>
   </body>
 </html>
