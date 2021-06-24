@@ -40,7 +40,7 @@
        await fs.init( url );
 
        let opts = { fs, http, dir: CWD, url: url, force: true,
-		    corsProxy: 'http://localhost:9999' };
+		    corsProxy: 'https://cors.isomorphic-git.org' }; //http://localhost:9999' };
        await git.clone( opts );
        let entries = await fs.promises.readdir("/");
        draw_directory( entries );
@@ -48,11 +48,12 @@
 
      let timer;
      let save_timer = ( content, path ) => {
+       clearTimeout(timer);
        timer = setTimeout( async () => {
 	 await fs.promises.writeFile(path, content);
 	 draw_toolbar( path );
 	 clearTimeout(timer);
-       }, 500);
+       }, 1500);
      };
 
      let draw_toolbar = async( path ) => {
