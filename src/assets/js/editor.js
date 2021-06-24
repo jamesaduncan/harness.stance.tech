@@ -1,5 +1,50 @@
 import http from 'https://unpkg.com/isomorphic-git@beta/http/web/index.js'
 
+class EventEmitter {
+  constructor() {
+    let prop = { eventTypes: [], eventHndl: {} };
+    Object.defineProperty(this, "_events", {
+      value: prop,
+      enumerable: false
+    });
+  }
+
+  addEventType () {
+    console.log(arguments);
+    this._events.eventTypes.push( Array.from( arguments ).slice(0, arguments.length) );
+    console.log(this);
+  }
+
+  _validateEventType( type ) {
+    if (!type) throw new Error(`event type undefined`);
+    if ( this._events.eventTypes.indexOf( type ) == -1 ) {
+      throw new Error(`unknown event type ${type}`);
+    }
+  }
+
+  addEventListener (type, handler, opts) {
+    this._validateEventType(type);
+    if ( !this._events.eventHndl[ type ] ) {
+      this._events.eventHndl[ type ] = [];
+    }
+    this._events.eventHndl[type].push( handler );
+  }
+
+  removeEventListener (type, handler, opts) {
+    this._validateEventType(type);
+    let pos = this._events.eventHndl[ type ].indexOf( handler );
+    if (pos != -1) this._events.eventHndl[ type ].splice(pos, 1);
+  }
+
+  emit ( type, data = {} ) {
+    this._validateEventType( type );
+    data.target = this;
+    this._events.eventHndl[ type ].forEach( (hndl) => {
+      hndl.apply( this, [ data ] );
+    });
+  }
+}
+
 class Matter {
 
   static hasMatter( aString ) {
@@ -123,9 +168,11 @@ class Path {
   }
 }
 
-class EleventyEditor {
+class EleventyEditor extends EventEmitter {
 
   constructor( url, conf ) {
+    super();
+
     let fs = this.fs = new LightningFS(url)
     
     let myconfig = {};
@@ -137,6 +184,39 @@ class EleventyEditor {
     this.config = myconfig;
     
     document.querySelector( myconfig.DOMConfig?.repository ).value = this.repo;
+
+    let saveTimeout;
+    this.editor.addEventListener('input', () => {
+	document.querySelector('#toolbar-commit').disabled = false;
+	try {
+	    clearTimeout( saveTimeout );
+	} finally {
+	    saveTimeout = setInterval(() =>{
+		console.log("Saving...");
+		this.save();
+		clearTimeout(saveTimeout);
+	    }, 1000);
+	}
+    }, false);      
+
+    this.addEventType("clone");
+    this.addEventType("write");
+    this.addEventType("read");
+  }
+ 
+ /*
+    directory: "#listing",
+    file     : "#editor",
+    metadata : "#metadata",
+    repository: "#repository",
+  */
+  
+  set editor( qs ) {
+    this.config.DOMConfig.file = qs;
+  }
+  
+  get editor() {
+    return document.querySelector( this.config.DOMConfig?.file );
   }
 
   async clone() {
@@ -150,8 +230,10 @@ class EleventyEditor {
       corsProxy: this.config?.corsProxy || 'https://cors.isomorphic-git.org', 
       force: true
     });
+
+    console.log( this.clone );
   }
-  
+
   async display() {
     let [,path] = (window.location.hash || "#/").match(/\#(.+)$/); // always trim the top of the hash
     let dirent = await this.pfs.stat(path); 
@@ -164,11 +246,32 @@ class EleventyEditor {
     }
   }
 
+  async save() {
+    let [,path] = (window.location.hash || "#/").match(/\#(.+)$/); // always trim the top of the hash      
+    let dirent = await this.pfs.stat(path); 
+    if ( dirent?.type == 'file' ) {
+	await this.writeFile( path );
+	console.log('saved');
+    } else if ( dirent?.type == 'dir' ) {
+	console.log("cannot save directories yet");
+    }
+  }
+    
+  async writeFile( aFile ) {
+      let p = new Path( aFile );
+      
+    let metadata = JSON.parse( document.querySelector( this.config.DOMConfig.metadata + ' textarea').value );
+    let content  = document.querySelector( this.config.DOMConfig.file ).innerHTML;  
+    let fdata = this.config.handlers[p.extension]?.write( content, metadata );
+    await this.pfs.writeFile(aFile, fdata, { encoding: "utf8" });
+    this.emit("write");
+  }
+    
   async drawFile( aFile ) {
     this.clearFileContents();
 
     let elem = document.querySelector( this.config.DOMConfig.file );
-    
+   
     let p = new Path( aFile );
     this.drawDirectory(p.path);
     
@@ -303,14 +406,14 @@ EleventyEditor.defaultConfig = {
 	return md.render( content );
       },
       write: ( content, metadata ) => {
-	let td = new TurndownService();
+	  let td = new TurndownService({ headingStyle: 'atx' });
 	let md = td.turndown( content );
 	let fm = jsyaml.dump( metadata );
 	let fdata = "---\n" + fm + "---\n" + md;
-	return fdata;
+        return fdata;
       }
     },
   }
 };
 
-export { EleventyEditor }
+export { EleventyEditor, EventEmitter }

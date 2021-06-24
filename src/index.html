@@ -23,39 +23,87 @@
     </script>
     
     <script type="module">
-     import { Helpers, Editor } from '/assets/js/eleventor.js';
-
+     import http from 'https://unpkg.com/isomorphic-git@beta/http/web/index.js';
+     import { Path, Helpers, Editor } from '/assets/js/eleventor.js';
+     
      const $ = Helpers;
-
+     console.log($);
+     
      /* construct the editor */
-     let elty = window.elty = new Editor();
+     window.fs   = new LightningFS();
+     /* this keeps track of the working directory for us */
      let CWD  = "/";
 
      /* tags up the load button with a click handle so that we clone the repo */
      document.querySelector('#clone').addEventListener('click', async (event) => {
        let url = $.dataFor( event.target );
-       let fs  = new LightningFS();
        await fs.init( url );
-       elty.clone({ fileSystem: fs });
+
+       let opts = { fs, http, dir: CWD, url: url, force: true,
+		    corsProxy: 'http://localhost:9999' };
+       await git.clone( opts );
+       let entries = await fs.promises.readdir("/");
+       draw_directory( entries );
      }, false);
+
+     let timer;
+     let save_timer = ( content, path ) => {
+       timer = setTimeout( async () => {
+	 await fs.promises.writeFile(path, content);
+	 draw_toolbar( path );
+	 clearTimeout(timer);
+       }, 500);
+     };
+
+     let draw_toolbar = async( path ) => {
+       let filename = Path.file( path );
+       let status   = await git.status({ fs, dir: "/", filepath: path.slice(1) });
+       $.replace('ul.toolbar', $.listBuilder([ status ] ));
+     };
      
-     /* when we clone the repo, we need to do something */
-     elty.addEventListener("clone", async () => {
-       let entries = await elty.fs.promises.readdir("/");
-       let node = $.listBuilder( entries, {
+     let draw_file = async( path ) => {
+       let content = await fs.promises.readFile(path, { encoding: 'utf8' });
+
+       draw_toolbar( path );
+
+       $.replace('#editor', () => {
+	 let ta  = document.createElement('textarea');
+	 let txt = document.createTextNode( content );
+	 ta.appendChild( txt );
+	 
+	 ta.addEventListener('input', () => {
+	   save_timer( ta.value, path );
+	 });
+	 
+	 return ta;
+       });
+     };
+     
+     let draw_directory = async( entries ) => {
+       let node = $.listBuilder( ['..', entries].flat(), {
 	 ordered: false,
 	 mapped : [ 'a', (a) => {
-	   a.addEventListener('click', (event) => {
-	     console.log(event.target.text);
+	   a.setAttribute('href', '#');
+	   a.addEventListener('click', async (event) => {
+	     let text = event.target.text;
+	     let path = Path.normalize( Path.join( CWD, text ) );
+	     let stat = await fs.promises.stat( path );
+
+	     if (stat.type == 'dir') {
+	       let dirents = await fs.promises.readdir( path );
+	       CWD = path;
+	       console.log(`dirents for ${path}: `, dirents);
+	       draw_directory( dirents );
+	     } else {
+	       /* its a file */
+	       draw_file( path );
+	     }
 	   })
 	 }, 'li' ]
        });
-
-       let listing = document.querySelector('#listing');
-       while (listing.firstChild) { listing.removeChild(listing.firstChild) }
-       listing.appendChild( node );
-     });
-     
+       
+       $.replace('#listing', node);
+     }
     </script>
   </head>
 
@@ -63,26 +111,25 @@
     <header>
       <h1>Editor</h1>
     </header>
-    <section>
+
+    <section class="repository">
       <label for="repository">Git repository: </label>
       <input id="repository" type="text" name="repository" value="https://github.com/jamesaduncan/osom.guide.git">
       <button data-for="#repository" data-property="value" id="clone">Load</button>
+    </section>
+    
+    <section class="directory-listing">
       <section id="listing">
       </section>
     </section>
-    <details>
-      <summary>Document metadata</summary>
-      <section id="metadata">
-      </section>
-    </details>
-    <details class="editor" open="true">
-      <summary></summary>
-      {% include './toolbar.html' %}
-      <section id="editor" contenteditable="true"></section>
-    </details>
+
+    <main>
+      <ul class="toolbar"></ul>
+      <section id="editor"></section>
+    </main>
+
     <footer>
       <span class="copyright">Copyright 2021 Stance Global Ltd</span>
     </footer>
-    <script src="/assets/js/content-editor.js"></script>
   </body>
 </html>

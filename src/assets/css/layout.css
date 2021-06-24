@@ -14,82 +14,74 @@ h1, h2, h3, h4, h5, h6 {
 body {
     font-family: var(--base-font);
     box-sizing: border-box;
+
+    display: grid;
+    grid-template-columns: 20% 80%;
+    grid-template-rows:    15% 15% auto 10%;
+
+    grid-template-areas:
+	"header header"
+	"repobar repobar"
+	"listing workspace"
+	"footer footer";
+}
+
+body > header {
+    grid-area: header;
+}
+
+body > section.repository {
+    grid-area: repobar;
+}
+
+body > section.directory-listing {
+    grid-area: listing;
+}
+
+body > main {
+    grid-area: workspace;
+
+    background-color: var(--lowlight-color);
+    
+    display: grid;
+    grid-template-columns: 100%;
+    grid-template-rows:    2em auto;
+    grid-template-areas:
+	"toolbar"
+	"editor";
+
+    background-color: var(--page-color);
+}
+
+body > footer {
+    grid-area: footer;
+}
+
+main > ul {
+    grid-area: toolbar;
 }
 
 section#editor {
-    width: 80ch;
+    grid-area: editor;
+    
+    width: 100%;
+    height: 100%;
+
     padding-left: 1vw;
     padding-right: 1vw;
     padding-top: 1vh;
     padding-bottom: 1vh;
     margin-left: auto;
     margin-right: auto;
-
-    background-color: var(--page-color);
 }
 
 [contenteditable] {
   outline: 0px solid transparent;
 }
 
-section#editor, section#editor:focus-visible {
-    border: 1px solid var(--border-color);
-}
-
-section#editor:empty {
-    display: none;
-}
-
-section#editor:-moz-only-whitespace {
-    display: none;
-}
-
 a:any-link {
     color: var(--link-color);
     text-decoration: none;
-}
-
-details.editor { /* if we had the :has pseudoclass we could dispense with the classname here. */
-    background-color: var(--lowlight-color);
-}
-
-ul.toolbar, ul.toolbar ul {
-    display: table;
-    padding: 0;
-    margin: 0;
-}
-
-ul.toolbar li {
-    display: table-cell;
-    list-style-type: none;
-    padding: 0;
-    margin: 0;
-
-    vertical-align: middle;
-}
-
-ul.toolbar li.section {
-    border-right: 1px solid var(--border-color);
-    padding-left: .5em;
-    padding-right: .5em;
-}
-
-ul.toolbar li.section li button {
-    border: none;
-    cursor: pointer;
-    background-color: var(--lowlight-color);
-
-    font-family: var(--base-font);
-
-    text-align: center;
-}
-
-ul.toolbar li.section li button:hover {
-    background-color: var(--highlight-color);
-}
-
-ul.toolbar select {
-    font-family: var(--base-font);
 }
 
 [disabled=true] {
@@ -101,5 +93,10 @@ ul.toolbar select {
 }
 
 #repository {
-    width: 40em;
+    width: 100%;
+}
+
+textarea {
+    width: 90%;
+    height: 90%;
 }
